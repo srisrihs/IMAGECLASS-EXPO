@@ -1,0 +1,398 @@
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+
+##read and dowload up here##no code
+
+import numpy as np
+import gzip
+
+train_images = np.load(gzip.open('train_images.npy.gz', 'rb'))
+train_labels = np.load(gzip.open('train_labels.npy.gz', 'rb'))
+validation_images = np.load(gzip.open('validation_images.npy.gz', 'rb'))
+
+len(train_images[5000:10000])
+
+len(train_images[10000:15000])
+
+images=[]
+for i in range(10):
+    print(images,"Steps")
+    images = train_images[i*5000: (i+1)*5000]
+    print(images,"Steps")
+train_images[0][1][2]
+
+import matplotlib.pyplot
+matplotlib.pyplot.rcParams["axes.grid"] = False  #  Remove the grid lines from the image.
+matplotlib.pyplot.imshow(train_images[0])
+
+import matplotlib.pyplot
+matplotlib.pyplot.rcParams["axes.grid"] = False  #  Remove the grid lines from the image.
+matplotlib.pyplot.imshow(train_images[0],interpolation='sinc')
+
+train_labels[0]
+
+label_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
+               'dog', 'frog', 'horse', 'ship', 'truck']
+               
+label_names[train_labels[0]]
+
+#perpetual
+
+tf.subtract(train_images[0][:,:,0],train_images[1][:,:,0])
+
+#writing a function of colour metric formula
+@tf.function
+def p_delta(x,y):
+    p_gr=tf.square(tf.subtract(x[:,:,1],y[:,:,1]))
+    p_rr=tf.square(tf.subtract(x[:,:,0],y[:,:,0]))
+    p_bl=tf.square(tf.subtract(x[:,:,2],y[:,:,2]))
+    n_r=tf.divide(tf.add(x[:,:,0],y[:,:,0]),2)
+    p_delta=tf.sqrt(4*p_gr + 2*p_rr + 3*p_bl + n_r*(p_rr - p_bl))
+    return tf.reduce_sum(p_delta/(32*32))
+    
+ import tensorflow as tf
+
+@tf.function
+def delta_func(images, base):
+    return tf.map_fn(lambda x: p_delta(x,base),images)
+    
+    
+deltas = delta_func(train_images,validation_images[0])
+tf.reduce_mean(deltas)
+
+tf.math.reduce_std(deltas)
+
+indices=np.sort(deltas.numpy()) #this is not giving right answer
+
+tf_num=deltas.numpy()
+
+tf_num
+
+pre_indices=tf_num.argsort()
+
+#softmax
+
+from tensorflow.keras.utils import to_categorical as one_hot
+tf.one_hot(train_labels,10)
+#now one hot encoding is required
+y_train=tf.one_hot(y_train,10)
+y_test=tf.one_hot(y_test,10)
+
+n_PIXELS=32*32
+n_CLASSES=10
+hidden_size=64
+
+
+class DenseNeuralNetwork():
+    def __init__(self, eta=.1):
+        self.opt = tf.keras.optimizers.SGD(learning_rate=eta)
+    
+    def _logits(self, X):
+        return tf.matmul(X, self.W) + self.b
+    
+    def loss(self, X, y, return_func=False):
+        def loss_():
+            return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+                logits=self._logits(X), labels=y))
+        
+        if not return_func:
+            return loss_()
+        
+        return loss_
+    
+    def fit(self, X, y, steps=100000):
+        if not hasattr(self, 'W'):
+            self.W = tf.Variable(tf.zeros((X.shape[1], 10), dtype=X.dtype))
+        if not hasattr(self, 'b'):
+            self.b = tf.Variable(tf.zeros((1,10), dtype=X.dtype))
+        
+        for _ in range(steps):
+            self.opt.minimize(self.loss(X, y, return_func=True), [self.W, self.b])
+    
+    def predict_proba(self, X):
+        return tf.nn.softmax(self._logits(X))
+        
+    def predict(self, X):
+        return tf.argmax(self.predict_proba(X), axis = 1)
+    
+    def score(self, X, y):
+        return tf.reduce_mean(tf.cast(tf.equal(self.predict(X), tf.argmax(y,axis=1)), tf.float64))
+        
+ model= DenseNeuralNetwork()
+ 
+ train_images.shape
+ 
+ typical_ims = []
+for i in range(10):
+    img = tf.Variable(tf.random.uniform((32,32,3), dtype=tf.float32))
+    label = i
+    pics = np.where(train_labels == label)
+    ims = train_images[pics]
+    optimizer = tf.keras.optimizers.SGD(learning_rate=0.1)
+    with tf.GradientTape() as tape:
+        loss = delta_func(ims, img)
+    vars_l = [img]
+    grads = tape.gradient(loss, vars_l)
+    optimizer.apply_gradients(zip(grads, vars_l))
+    typical_ims.append(img)
+    
+    
+ layer_shapes[1]
+ reshape_images=[]
+for image in range(10):
+    im=tf.variable(tf.random)
+    
+    
+tf.cast(train_images[:10],tf.float32)
+
+typical_ims = [tf.cast(typical_ims[i], tf.float32) for i in range(10)]
+
+
+X_train = []
+for im in train_images:
+    im = tf.cast(im, tf.float32)
+    diff = np.asarray([p_delta(typical_ims[i],im).numpy() for i in range(10)])
+    X_train.append(diff) 
+X_train = np.asarray(X_train)
+
+
+X_train.shape
+
+
+y_train = tf.one_hot(train_labels, 10).numpy()
+
+
+y_train.shape
+
+
+model.fit(X_train,y_train)
+
+
+t(im, tf.float32)
+    diff = np.asarray([p_delta(typical_ims[i],im).numpy() for i in range(10)])
+    X_test.append(diff) 
+X_test= np.asarray(X_test)
+
+X_test.shape
+
+y_test=tf.one_hot(train_labels[40000:],10).numpy()
+y_test.shape
+
+np.argmax(model.predict(X_test))
+
+model.score(y_test,X_test)
+
+##fully-connected
+
+from random import shuffle
+from tensorflow.keras.utils import to_categorical as one_hot
+np.concatenate(np.concatenate(train_images[10])).shape
+
+X_train=[np.concatenate(np.concatenate(img)) for img in train_images]
+
+y_train=one_hot(train_labels[:48000])
+y_test=one_hot(train_labels[48000:])
+
+#define layers
+N_PIXELS= 32*32*3
+N_CLASSES = 10
+
+hidden_size = 64
+
+
+model = keras.models.Sequential()
+
+model.add(
+    keras.layers.Dense(
+        hidden_size,
+        activation='sigmoid',
+        use_bias=True,  # The default
+        kernel_initializer=keras.initializers.TruncatedNormal(stddev=N_PIXELS**-0.5)
+    )
+)
+
+model.add(
+    keras.layers.Dense(
+        10,
+        activation='softmax',
+        kernel_initializer=keras.initializers.TruncatedNormal(stddev=hidden_size**-0.5)
+    )
+)
+
+
+model.compile(loss='categorical_crossentropy',
+              optimizer=keras.optimizers.SGD(lr=0.5),
+              metrics=['accuracy'])
+              
+              
+fmodel=model.fit(np.asarray(X_train[:48000]), y_train, epochs=10, 
+                 batch_size=128, 
+                 validation_data=(np.asarray(X_train[48000:]),y_test))      
+X_val = [np.concatenate(np.concatenate(img)) for img in validation_images]        
+
+
+predicted_classes=list(np.argmax(model.predict(np.asarray(X_val)),axis=1))
+
+#Convolutioj model
+
+#image_size=32
+images_size_flat= 32*32
+shape_image=(32,32)
+
+no_classes=10
+no_channels=1
+filt_size=[5,5]
+model=keras.models.Sequential()
+model.add(keras.layers.Reshape([32,32,3]))
+model.add(keras.layers.Conv2D(16,filt_size,padding='same', activation='relu'))
+model.add(keras.layers.MaxPooling2D(pool_size=(2,2),strides=(2,2), padding='same'))
+model.add(keras.layers.Dropout(0.5))
+model.add(keras.layers.Flatten())
+model.add(keras.layers.Dense(100, activation='relu'))
+model.add(keras.layers.Dense(no_classes,activation='softmax'))
+
+model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+              
+              
+CNNmodel=model.fit(np.asarray(X_train[:48000]), y_train, epochs=50, 
+                 batch_size=128, 
+                 validation_data=(np.asarray(X_train[48000:]),y_test))  
+                 
+                 
+predicted_classes=list(np.argmax(model.predict(np.asarray(X_val)),axis=1))
+
+
+##Transfer Learning
+
+# include_top=False will discard avg_pool before prediction layer
+inception = tf.keras.applications.inception_v3.InceptionV3(include_top=True, input_shape=(299, 299, 3))
+inception = tf.keras.Model([inception.input], [inception.layers[-2].output]) # manually discard prediction layer
+
+
+import tensorflow as tf
+from tensorflow import keras
+import numpy as np
+
+def trainimage():
+    for img in range(100):
+        Timage=train_images[img*500:(img+1)*500]
+        
+        vectors_ready=np.asarray(Timage)
+    return vectors_ready
+    
+    
+for img in range(1000):    
+    Timage=train_images[img*50:(img+1)*50]
+    resizeimg=[tf.image.resize(im,[299,299]).numpy().astype(np.float32) for im in Timage]
+    vectors=[inception.predict(np.expand_dims(j,axis=0)) for j in resizeimg]
+    vectors_ready=np.asarray(vectors)
+    with open('resize{}.npy'.format(img), 'wb') as f:
+        np.save(f,vectors_ready)    
+        
+ del vectors_ready
+del Timage
+del vectors
+del resizeimg     
+
+
+loadall=[]
+for i in range(1000):
+    x=np.load(open('resize{}.npy'.format(i), 'rb'))
+    loadall.extend(x)
+    
+    
+    
+latent_vectors=np.concatenate(loadall)
+
+latent_vectors.shape
+X_train = loadall
+
+y_train = train_labels[:48000]
+
+X_t = np.concatenate(X_train[:48000])
+
+X_test = np.concatenate(X_train[48000:])
+y_test = train_labels[48000:]
+                          
+from tensorflow.keras.utils import to_categorical as one_hot
+
+y_train_hot = one_hot(y_train)
+y_test_hot = one_hot(y_test)   
+
+
+N_PIXELS= 299 * 299 * 3
+N_CLASSES = 10
+
+hidden_size = 64
+
+
+batch_size = 128
+
+train_latent = np.concatenate(loadall[:48000])
+validation_latent = [tf.image.resize(im,[299, 299]).numpy().astype(np.float32) for im in validation_images]
+
+
+
+model = keras.models.Sequential()
+
+model.add(
+    keras.layers.Dense(
+        hidden_size,
+        activation='sigmoid',
+        use_bias=True,
+        kernel_initializer=keras.initializers.TruncatedNormal(stddev=N_PIXELS**-0.5)
+    )
+)
+
+model.add(
+    keras.layers.Dense(
+        10,
+        activation='softmax',
+        kernel_initializer=keras.initializers.TruncatedNormal(stddev=hidden_size**-0.5)
+    )
+)
+
+
+model.compile(loss='categorical_crossentropy',
+              optimizer=keras.optimizers.SGD(lr=0.5),
+              metrics=['accuracy'])
+              
+              
+              
+ history = model.fit(X_t, y_train_hot,
+                    epochs=2,
+                    batch_size=128,
+                    validation_data=(X_test,y_test_hot))        
+                    
+                    
+ validation_images.shape    
+ 
+ lis=np.uint8(validation_images[:1].resize((299, 299))).astype(np.float32)
+ 
+ 
+ for img in range(100):    
+    #Timage=validation_images[img*50:(img+1)*50]
+    images = validation_images[img*1000:(img+1)*1000]
+    liss = [tf.image.resize(im,[299, 299]).numpy().astype(np.float32) for im in images]
+    ress = [inception.predict(np.expand_dims(l, axis=0)) for l in liss]
+    ress_ready = np.asarray(ress)
+    with open('test{}.npy'.format(img), 'wb') as g:
+        np.save(g, ress_ready)
+        
+        
+ test = []
+for i in range(10):
+    a = np.load(open("test{}.npy".format(i),'rb'))
+    test.extend(a)#.reshape(,2048))        
+    
+    
+val = np.concatenate(test)
+
+predicted_classes = list(np.argmax(model.predict(val),axis=1))
+
+
+
+ 
